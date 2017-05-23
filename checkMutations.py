@@ -45,6 +45,7 @@ with open('tmp', 'r') as ph:
         ec = s[0].strip().split(".")[0]+"_"+str(len(seq))
 
         sequences[ec] = seq
+print("tits")
 
 with open('CosmicMutantExportSilent.tsv', 'r') as f:
 
