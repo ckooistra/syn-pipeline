@@ -4,11 +4,11 @@ from collections import Counter
 import re
 
 def makeCodon(seq, p):
-    if position % 3 == 0:
+    if p% 3 == 0:
         return seq[p-2:p+1]
-    if position % 3 == 1:
+    if p% 3 == 1:
         return seq[p:p+3]
-    if position % 3 == 2:
+    if p% 3 == 2:
         return seq[p-1:p+2]
 
 def makeMutatntCodon(codon, pos, mutation):
@@ -45,7 +45,6 @@ with open('tmp', 'r') as ph:
         ec = s[0].strip().split(".")[0]+"_"+str(len(seq))
 
         sequences[ec] = seq
-print("tits")
 
 with open('CosmicMutantExportSilent.tsv', 'r') as f:
 
@@ -55,7 +54,8 @@ with open('CosmicMutantExportSilent.tsv', 'r') as f:
     report = []
     skipped = []
     cnt = Counter()
-
+    
+    n = 0
     for line in f:
         # if number == 1000:
         #     break
@@ -64,7 +64,8 @@ with open('CosmicMutantExportSilent.tsv', 'r') as f:
 
         number += 1
 
-        if values[25] == 'y' or re.search('_', values[17]) or values[17] == 'c.?':
+        if values[25] == 'y' or re.search('_', values[17]) or values[17] == 'c.?' or re.search('\*', values[18]):
+
             skipped.append(values[1]+", not valid")
             unMatched += 1
             continue
@@ -72,7 +73,7 @@ with open('CosmicMutantExportSilent.tsv', 'r') as f:
         try:
             gene = values[0].strip()
             ensemblCode = values[1]
-            position = int(values[17][2:-3])
+            position = int(values[17][2:-3])-1
             normalNuc = values[17][-3]
             mutantNuc = values[17][-1]
             length = int(values[2])
@@ -84,27 +85,43 @@ with open('CosmicMutantExportSilent.tsv', 'r') as f:
             skipped.append(ensemblCode+",missing genome position")
             unMatched += 1
             continue
-            # input()
-
 
         code = ensemblCode+"_"+str(length)
         if sequences.get(code):
-            codons = makeMutatntCodon(makeCodon(sequences[code], position),position % 3, mutantNuc)
+            if len(sequences.get(code))%3 != 0:
+                print("Ensembl code = "+code)
+                print("First 5 nucs = "+sequences[code][0:10])
+                print("Last 5 nucs = "+sequences[code][-10:])
+                n+=1
+            codons = makeMutatntCodon(makeCodon(sequences[code],
+                                                position),position+1 % 3, mutantNuc)
             report.append(ensemblCode+","+str(genome)+","+str(genomePosition)+","+str(position)+","+
-            str(3-(position%3))+","+ normalNuc +"," + mutantNuc + "," +
+            str(3-((position+1)%3))+","+ normalNuc +"," + mutantNuc + "," +
             codons[0]+ "," +
             codons[1]+","+transitionOrTransversion(normalNuc,mutantNuc)+","+str(round(positionOfMutation(position,
                 length),3))+","+aa+"\n")
 
             matchNumber += 1
             cnt[gene] += 1
-
+            
+            if aa == '*' and len(sequences.get(code))%3 is not 0:
+                print("Code is "+code+" modulo 3 "+str(len(sequences.get(code))%3))
+                
         else:
-            skipped.append(ensemblCode+",codeNotFound")
+            s = ensemblCode +' '+ str(length)+' ' 
+            keys = [key for key, value in sequences.items() if ensemblCode in
+             key.upper()]
+            for k in keys:
+                s += '---'+k+' '+str(len(sequences[k]))
+
+            skipped.append(s)
 
         if number % 200 == 0:
             print(number)
 
+
+print("n(number of items that did not work out to modulo 0 but the coding\
+      sequence was not there)= "+str(n))
 print ("Matched number = "+str(matchNumber))
 print ("unMatched number = "+str(unMatched))
 print ("Match percentage = "+str((matchNumber/(unMatched+matchNumber)*100)))
