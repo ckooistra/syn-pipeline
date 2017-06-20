@@ -3,21 +3,34 @@
 from collections import Counter
 import re
 
-def makeCodon(seq, p):
-    if p% 3 == 0:
-        return seq[p-2:p+1]
-    if p% 3 == 1:
-        return seq[p:p+3]
-    if p% 3 == 2:
-        return seq[p-1:p+2]
 
-def makeMutatntCodon(codon, pos, mutation):
+def makeCodon(seq, p, number):
+    print('Position given to makeCodon = '+str(p)+'....... line number from tsv = '+str(number))
+    if p% 3 == 0:
+        return seq[p-3:p]
+    if p% 3 == 1:
+        return seq[p-1:p+2]
+    if p% 3 == 2:
+        print('Make codon '+seq[p-1:p+2]+' mod3 = '+str(len(seq)%3))
+        print('Line number equals '+str(number))
+        return seq[p-2:p+1]
+
+def makeMutatntCodon(codon, pos, mutation, number):
+
+    pos = pos%3
     muantCodon = ""
+    print('-------------------------------------')
     for x in range(len(codon)):
-        if x == 3-(pos+1):
+        print('(3-pos)) = '+str((3-pos)))
+        if x == ((3-pos)-1):
             muantCodon += mutation
         else:
             muantCodon += codon[x]
+        print('x = '+str(x)+' pos = '+str(pos)+' mutation = '+mutation)
+
+    print('Wildtype codon = '+codon+' ....Mutant Codon '+muantCodon+' number = '+str(number))
+    print('--------------------------------------')
+    #input()
     return [codon, muantCodon]
 
 def transitionOrTransversion(normalNuc, mutantNuc):
@@ -46,6 +59,8 @@ with open('tmp', 'r') as ph:
 
         sequences[ec] = seq
 
+# Check each line of called synonymous cancer mutations and match to reference genome using transcript
+# ENSEMBL ID and transcript length to match the reference and mutations
 with open('CosmicMutantExportSilent.tsv', 'r') as f:
 
     number = 0
@@ -54,17 +69,16 @@ with open('CosmicMutantExportSilent.tsv', 'r') as f:
     report = []
     skipped = []
     cnt = Counter()
-    
+    mod = []
+
     n = 0
     for line in f:
-        # if number == 1000:
-        #     break
 
         values = line.split("\t")
 
         number += 1
-
-        if values[25] == 'y' or re.search('_', values[17]) or values[17] == 'c.?' or re.search('\*', values[18]):
+        # If known snip, or if insertion, stop codon or if sequence change not known skip
+        if values[25] == 'y' or re.search('_', values[17]) or values[17] == 'c.?' or re.search('\*|p.*X', values[18]):
 
             skipped.append(values[1]+", not valid")
             unMatched += 1
@@ -73,7 +87,7 @@ with open('CosmicMutantExportSilent.tsv', 'r') as f:
         try:
             gene = values[0].strip()
             ensemblCode = values[1]
-            position = int(values[17][2:-3])-1
+            position = int(values[17][2:-3]) #Position of the mutation
             normalNuc = values[17][-3]
             mutantNuc = values[17][-1]
             length = int(values[2])
@@ -89,30 +103,29 @@ with open('CosmicMutantExportSilent.tsv', 'r') as f:
         code = ensemblCode+"_"+str(length)
         if sequences.get(code):
             if len(sequences.get(code))%3 != 0:
-                print("Ensembl code = "+code)
-                print("First 5 nucs = "+sequences[code][0:10])
-                print("Last 5 nucs = "+sequences[code][-10:])
-                n+=1
-            codons = makeMutatntCodon(makeCodon(sequences[code],
-                                                position),position+1 % 3, mutantNuc)
-            report.append(ensemblCode+","+str(genome)+","+str(genomePosition)+","+str(position)+","+
-            str(3-((position+1)%3))+","+ normalNuc +"," + mutantNuc + "," +
-            codons[0]+ "," +
-            codons[1]+","+transitionOrTransversion(normalNuc,mutantNuc)+","+str(round(positionOfMutation(position,
-                length),3))+","+aa+"\n")
+                mod.append("Ensembl code = "+code+"First 10 nucs = "+sequences[code][0:10]+"+Last 5 nucs = "+sequences[code][-10:])
+
+            print("code = "+str(code)+" length = "+str(len(sequences[code]))+" mod3 = "+str(len(sequences[code])%3))
+            codons = makeMutatntCodon(makeCodon(sequences[code], position, number),position, mutantNuc, number)
+            report.append(gene+','+ensemblCode+","+str(genome)+","+str(genomePosition)+
+            ","+str(len(sequences[code]))+","+str(position)+","+str(3-((position)%3))+
+            ","+ normalNuc +"," + mutantNuc + "," + codons[0]+ ","+codons[1]+","+
+            transitionOrTransversion(normalNuc,mutantNuc)+","+
+            str(round(positionOfMutation(position, length),3))+","+aa+"\n")
+
 
             matchNumber += 1
             cnt[gene] += 1
-            
+
             if aa == '*' and len(sequences.get(code))%3 is not 0:
                 print("Code is "+code+" modulo 3 "+str(len(sequences.get(code))%3))
-                
+
         else:
-            s = ensemblCode +' '+ str(length)+' ' 
-            keys = [key for key, value in sequences.items() if ensemblCode in
-             key.upper()]
-            for k in keys:
-                s += '---'+k+' '+str(len(sequences[k]))
+            s = ensemblCode +' '+ str(length)+' '
+            #keys = [key for key, value in sequences.items() if ensemblCode in
+             #key.upper()]
+            #for k in keys:
+             #   s += '---'+k+' '+str(len(sequences[k]))
 
             skipped.append(s)
 
@@ -128,7 +141,7 @@ print ("Match percentage = "+str((matchNumber/(unMatched+matchNumber)*100)))
 
 
 with open ('report.csv', 'w') as fil:
-    fil.write('ENSEMBL,Genome,Genome Position,CDS Position,nucOfCodon,nuc,mNuc,nCodon,mCodontion,TransitionOrTransversion,position in AA chain %,AA\n')
+    fil.write('gene,ENSEMBL,Genome,Genome Position,LengthTranscript,CDS Position,nucOfCodon,nuc,mNuc,nCodon,mCodontion,TransitionOrTransversion,position in AA chain %,AA\n')
     for line in report:
         fil.write(line)
 
@@ -139,3 +152,7 @@ with open ('skippedReport.txt', 'w') as fil:
 with open ("geneCount.txt", 'w') as fil:
     for key in cnt.most_common():
         fil.write(key[0]+" "+str(key[1])+'\n')
+
+with open ("notMod.txt", 'w') as fil:
+        for line in mod:
+                    fil.write(line+'\n')
