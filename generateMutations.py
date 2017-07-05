@@ -1,8 +1,10 @@
 #!usr/bin/env python3
 
 import random 
+import numpy as np
 from collections import Counter
-from checkMutations2 import makeCodon, makeMutatntCodon, getSequencesFromReference 
+from checkMutations2 import makeCodon, makeMutatntCodon, getSequencesFromReference, transitionOrTransversion 
+from anno import opt, optChange
 import time
 
 def main():
@@ -67,7 +69,7 @@ def checkMutationType(wc,mc):
 def generateRandomMutations(number, sequences, transcripts):
     
     report = []
-    nucs = ['A', 'T', 'C', 'G']
+    nucs = np.array(['A', 'T', 'C', 'G'])
     noomber = 0
     while number > 0:
 
@@ -83,34 +85,33 @@ def generateRandomMutations(number, sequences, transcripts):
         
         # Wild type codon
         wc = makeCodon(sequences.get(t), i+1)
+
         
         #If Codon or sequence pulled are not mod3 or contain 'N' value nucleotides
         if len(wc)<3 or len(sequences.get(t)) % 3 != 0 or 'N' in sequences.get(t):
             continue
 
-        for item in nucs:
-            if item != n:
-                options.append(item)
         
-        mutantNuc = random.choice(options)
-
-        mc = makeMutatntCodon(wc, i+1, mutantNuc)[1]
-
-        if wc == mc:
-            print('n equals '+n+' mutantNuc equals '+mutantNuc+' options equals')
-            print(options)
-            print('modulo i+1 = '+str((i+1) % 3))
-            print('wc = '+wc+' mc = '+mc)
-            input()
-            
+        options = nucs != n
         
+        mutantNuc = random.choice(nucs[options])
+        mc = makeMutatntCodon(wc, i+1, mutantNuc)
+        
+
+        if wc == 'TGA' or wc == 'TAA' or wc == 'TAG' or mc == 'TGA' or mc == 'TAA' or mc == 'TAG':
+            continue
+        
+        oc = optChange(wc, mc)
+        tOrt = transitionOrTransversion(n, mutantNuc)
         if checkMutationType(wc, mc):
-            report.append(wc+','+mc)
+            report.append(wc+','+mc+','+tOrt+','+str.format('{0:.3f}',oc))
             number -= 1
         noomber += 1    
 
     print('number of iterations '+str(noomber))
+    
     with open('generatedMutations.csv', 'w') as f:
+        print('WC,MC,TransitionOrTransversion,OC', file = f)
         for line in report:
             print(line, file = f)
 

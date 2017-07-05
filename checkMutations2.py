@@ -21,25 +21,14 @@ def makeCodon(seq, p):
 def makeMutatntCodon(codon, pos, mutation):
 
     pos = pos % 3
-    print('--------------------------------------')
-    print('Vale of pos = '+str(pos))
-    print('Codon ='+codon+' Mutation = '+mutation)
     muantCodon = ""
-    for x in range(len(codon)):
-        print('x = '+str(x))
-        print('vale of mutant codon = '+muantCodon)
-        input()
-        if x == ((3-pos)-1):
-            muantCodon += mutation
-        else:
-            muantCodon += codon[x]
     
-    print('Final value of makeMutatntCodon')
-    print('vale of mutant codon = '+muantCodon)
-    input()
-    print('--------------------------------------')        
-
-    return [codon, muantCodon]
+    if pos is 0:
+        return codon[0:2]+mutation
+    if pos is 1:
+        return mutation+codon[1:]
+    if pos is 2:
+        return codon[0]+mutation+codon[1]
 
 def transitionOrTransversion(normalNuc, mutantNuc):
     purines = ["A", "G"]
@@ -118,8 +107,9 @@ def getMutationInfo(sequences):
                 if len(sequences.get(code))%3 != 0:
                     mod.append("Ensembl code = "+code+"First 10 nucs = "+sequences[code][0:10]+"+Last 5 nucs = "+sequences[code][-10:])
 
-                print("code = "+str(code)+" length = "+str(len(sequences[code]))+" mod3 = "+str(len(sequences[code])%3))
-                codons = makeMutatntCodon(makeCodon(sequences[code], position),position, mutantNuc)
+                codons = []
+                codons.append(makeCodon(sequences[code], position))
+                codons.append(makeMutatntCodon(codons[0], position, mutantNuc))
                 report.append(gene+','+ensemblCode+","+str(genome)+","+str(genomePosition)+
                 ","+str(len(sequences[code]))+","+str(position)+","+str(3-((position)%3))+
                 ","+ normalNuc +"," + mutantNuc + "," + codons[0]+ ","+codons[1]+","+
@@ -135,10 +125,10 @@ def getMutationInfo(sequences):
 
             else:
                 s = ensemblCode +' '+ str(length)+' '
-                #keys = [key for key, value in sequences.items() if ensemblCode in
-                 #key.upper()]
-                #for k in keys:
-                 #   s += '---'+k+' '+str(len(sequences[k]))
+                keys = [key for key, value in sequences.items() if ensemblCode in
+                 key.upper()]
+                for k in keys:
+                 s += '---'+k+' '+str(len(sequences[k]))
 
                 skipped.append(s)
 
