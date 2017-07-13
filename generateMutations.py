@@ -231,7 +231,7 @@ def generateSynonymousMutations(number, sequences, transcripts):
         report.append(wc+','+mc+','+str.format('{0:.3f}',oc)) 
         number -= 1
 
-    reportWriter('generatedSynMutations.csv', 'WC,MC,OC', report) 
+    reportWriter('generatedSynMutationsWithProb.csv', 'WC,MC,OC', report) 
 
 if __name__ == "__main__":
     main()
