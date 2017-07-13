@@ -46,7 +46,8 @@ def createCodonLists():
         l.append([0] * 64)
     
     return l
-        
+#Returns a dictionary with the keys as integer positions
+#and the values as a list with [wildTypeNuc, mutantNuc, transitionOrTransversion]
 def checkCodonDifferences(c1, c2):
     
     rep = {}
@@ -57,7 +58,7 @@ def checkCodonDifferences(c1, c2):
             rep[i] = [l1[i], l2[i], transitionOrTransversion(l1[i], l2[i])]
     return rep
 
-
+# Normalizes the nonzero values of a list to 1
 def listNormalizer(l):
 
     a = []
@@ -74,7 +75,7 @@ def listNormalizer(l):
     
     return a 
 
-
+#Creates a numpy 2D array to provide probabilities for likely synonymous mutations
 def createMutationProbMatrix(transi, transv):
     
     lists = createCodonLists()
@@ -101,7 +102,8 @@ def createMutationProbMatrix(transi, transv):
     return (a)
 
 
-
+#Gets cleaned mutations pulled from Cosmic database
+#Returns list with set of transcripts, transcriptFrequecy count and gene count 
 def getMutations():
 
     cntGene = Counter()
@@ -126,7 +128,8 @@ def getMutations():
     
     return [tran, cntTran, cntGene]    
 
-
+#Returns a list with two vectors, one of potential codons
+#the other with probabilities for the first vector
 def codonWeightedChoices(probVector, probNonZero):
     
     l =[[],[]]
@@ -143,7 +146,7 @@ def codonWeightedChoices(probVector, probNonZero):
     return [tuple(l[0]), tuple(l[1])]
 
  
-
+#Returns boolean valeur of synonymity
 def checkMutationType(wc,mc):
     
     
@@ -154,7 +157,10 @@ def checkMutationType(wc,mc):
     
 
 
-
+#Method to generate random mutations, takes as parameters
+#Number of mutations to perform and the dictionary of sequences from reference genome
+#and set of transcritps, Returns file with generated mutations including optimality change
+#This method generates random mutations but discards non synonymous ones
 def generateRandomMutations(number, sequences, transcripts):
     
     report = []
@@ -203,6 +209,10 @@ def generateRandomMutations(number, sequences, transcripts):
         print('WC,MC,TransitionOrTransversion,OC', file = f)
         for line in report:
             print(line, file = f)
+
+
+''' Same as above function however all mutations are synonymous calculated based on probability
+vector '''
 
 def generateSynonymousMutations(number, sequences, transcripts):
     
