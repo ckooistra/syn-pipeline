@@ -34,7 +34,7 @@ def transitionOrTransversion(normalNuc, mutantNuc):
     purines = ["A", "G"]
     pyrimidines = ["T", "C"]
 
-    if (normalNuc in purines and mutantNuc in purines) or (normalNuc in purines and mutantNuc in pyrimidines):
+    if (normalNuc in purines and mutantNuc in purines) or (normalNuc in pyrimidines and mutantNuc in pyrimidines):
         return "transition"
     else:
         return "transversion"
@@ -60,6 +60,11 @@ def getSequencesFromReference():
     
     return sequences
 
+def reportWriter(name, title, info):
+    with open(name, 'w') as f:
+        print(title, file=f)
+        for line in info:
+            print(line, file=f)
 
 def getMutationInfo(sequences):
     

@@ -1,9 +1,9 @@
-#!usr/bin/env python3
+#!usr/bin/env python
 
 import random 
 import numpy as np
 from collections import Counter
-from checkMutations2 import makeCodon, makeMutatntCodon, getSequencesFromReference, transitionOrTransversion 
+from checkMutations2 import makeCodon, makeMutatntCodon, getSequencesFromReference, transitionOrTransversion, reportWriter 
 from anno import opt, optChange
 import time
 
@@ -12,9 +12,93 @@ def main():
     seq = getSequencesFromReference()
     mutations = getMutations()
     tic = time.clock()
-    generateRandomMutations(1000000, seq, mutations)
+    generateSynonymousMutations(1000000, seq, mutations)
     toc = time.clock()
-    print('time to complete 1000000 = '+str(toc-tic))
+    print('time to complete 1000000 = '+str((toc-tic)/60))
+
+
+synAA = {'GCT':'A','GCC':'A','GCA':'A','GCG':'A',
+       'CGA':'R','CGT':'R','CGC':'R','CGG':'R','AGA':'R','AGG':'R',
+       'AAT':'N','AAC':'N','GAT':'D','GAC':'D','TGT':'C','TGC':'C','CAA':'Q','CAG':'Q','GAA':'E','GAG':'E',
+       'GGA':'G','GGT':'G','GGC':'G','GGG':'G','CAT':'H','CAC':'H','ATT':'I','ATC':'I','ATA':'I',
+       'ATG':'-','TTA':'L','TTG':'L','CTA':'L','CTT':'L','CTC':'L','CTG':'L','AAA':'K','AAG':'K','TTT':'F','TTC':'F',
+       'CCA':'P','CCT':'P','CCC':'P','CCG':'P','AGT':'S','AGC':'S','TCA':'S','TCT':'S','TCC':'S','TCG':'S',
+       'ACA':'T','ACT':'T','ACC':'T','ACG':'T','TGG':'W','TAT':'Y','TAC':'Y',
+       'GTA':'V','GTT':'V','GTC':'V','GTG':'V', 'TAA':'ST', 'TGA':'ST', 'TAG':'ST'
+      }
+
+synGroup = { 'A':['GCT', 'GCC', 'GCA', 'GCG'], 'R':['CGA','CGT','CGC','CGG','AGA','AGG'],
+            'N':['AAT','AAC'], 'D':['GAT','GAC'], 'C':['TGT','TGC'], 'Q':['CAA','CAG'], 'E':['GAA','GAG'],
+            'G':['GGA','GGT','GGC','GGG'], 'H':['CAT','CAC'], 'I':['ATT','ATC','ATA'], 'M':['ATG'],
+            'L':['TTA','TTG','CTA','CTT','CTC','CTG'], 'K':['AAA','AAG'], 'F':['TTT','TTC'],
+            'P':['CCA','CCT','CCC','CCG'], 'S':['AGT','AGC','TCA','TCT','TCC','TCG'],
+            'T':['ACA','ACT','ACC','ACG'], 'W':['TGG'], 'Y':['TAT','TAC'], 'V':['GTA','GTT','GTC','GTG'],
+            'ST':['TAA','TAG','TGA'] 
+           }
+
+
+codons = ['AAA', 'AAC', 'AAG', 'AAT', 'ACA', 'ACC', 'ACG', 'ACT', 'AGA', 'AGC', 'AGG', 'AGT', 'ATA', 'ATC', 'ATG', 'ATT', 'CAA', 'CAC', 'CAG', 'CAT', 'CCA', 'CCC', 'CCG', 'CCT', 'CGA', 'CGC', 'CGG', 'CGT', 'CTA', 'CTC', 'CTG', 'CTT', 'GAA', 'GAC', 'GAG', 'GAT', 'GCA', 'GCC', 'GCG', 'GCT', 'GGA', 'GGC', 'GGG', 'GGT', 'GTA', 'GTC', 'GTG', 'GTT', 'TAA', 'TAC', 'TAG', 'TAT', 'TCA', 'TCC', 'TCG', 'TCT', 'TGA', 'TGC', 'TGG', 'TGT', 'TTA', 'TTC', 'TTG', 'TTT']
+
+
+def createCodonLists():
+    l = []
+    for i in range(64):
+        l.append([0] * 64)
+    
+    return l
+        
+def checkCodonDifferences(c1, c2):
+    
+    rep = {}
+    l1 , l2 = list(c1), list(c2)
+
+    for i in range(3):
+        if l1[i] != l2[i]:
+            rep[i] = [l1[i], l2[i], transitionOrTransversion(l1[i], l2[i])]
+    return rep
+
+
+def listNormalizer(l):
+
+    a = []
+    
+    for row in l:
+        newArr = []
+
+        for elem in row:
+            if sum(row)!= 0:
+                newArr.append(elem/sum(row))
+            else:
+                newArr.append(elem)
+        a.append(newArr)
+    
+    return a 
+
+
+def createMutationProbMatrix(transi, transv):
+    
+    lists = createCodonLists()
+    t = {'transition':transi, 'transversion':transv}
+    for i in range(64):
+        c1 = codons[i]
+        
+        for j in range(64):
+            c2 = codons[j]
+            differences = checkCodonDifferences(c1,c2)
+            if c2 == c1 or synAA[c2] != synAA[c1]:
+                lists[i][j] = 0
+            
+            else:
+                prob = 1.0
+                for key in differences:
+                    prob *= t[differences[key][2]] 
+                lists[i][j] = prob
+
+    lists = listNormalizer(lists)
+
+    a  = np.array(lists)
+
+    return (a)
 
 
 
@@ -48,17 +132,8 @@ def codonProbabilities():
 
 def checkMutationType(wc,mc):
     
-    syn = {'GCT':'A','GCC':'A','GCA':'A','GCG':'A',
-           'CGA':'R','CGT':'R','CGC':'R','CGG':'R','AGA':'R','AGG':'R',
-           'AAT':'N','AAC':'N','GAT':'D','GAC':'D','TGT':'C','TGC':'C','CAA':'Q','CAG':'Q','GAA':'E','GAG':'E',
-           'GGA':'G','GGT':'G','GGC':'G','GGG':'G','CAT':'H','CAC':'H','ATT':'I','ATC':'I','ATA':'I',
-           'ATG':'-','TTA':'L','TTG':'L','CTA':'L','CTT':'L','CTC':'L','CTG':'L','AAA':'K','AAG':'K','TTT':'F','TTC':'F',
-           'CCA':'P','CCT':'P','CCC':'P','CCG':'P','AGT':'S','AGC':'S','TCA':'S','TCT':'S','TCC':'S','TCG':'S',
-           'ACA':'T','ACT':'T','ACC':'T','ACG':'T','TGG':'W','TAT':'Y','TAC':'Y',
-           'GTA':'V','GTT':'V','GTC':'V','GTG':'V', 'TAA':'ST', 'TGA':'ST', 'TAG':'ST'
-          }
     
-    if syn[wc] == syn[mc]:
+    if synAA[wc] == synAA[mc]:
         return True
     else:
         return False
@@ -115,6 +190,48 @@ def generateRandomMutations(number, sequences, transcripts):
         for line in report:
             print(line, file = f)
 
+def generateSynonymousMutations(number, sequences, transcripts):
+    
+    report = []
+
+    while number > 0:
+        # Choose random CDS from pool 
+        t = random.sample(transcripts[0], 1)[0]
+
+        # Choose random nucleotide in chosen sequence
+        i = random.randint(0,(len(sequences[t])-1))
+         
+        # Chosen nucleotide stored as n.
+        n = sequences.get(t)[i]
+        
+        # Wild type codon
+        wc = makeCodon(sequences.get(t), i+1)
+
+        
+        #If Codon or sequence pulled are not mod3 or contain 'N' value nucleotides
+        if len(wc)<3 or len(sequences.get(t)) % 3 != 0 or 'N' in sequences.get(t) or wc == 'ATG' or synAA[wc] == 'ST' or wc == 'TGG':
+            continue
+
+        aa = synAA[wc]
+
+        sins = np.array(synGroup[aa])
+
+        options = sins != wc
+
+        try:
+            mc = random.choice(sins[options])
+
+        except IndexError:
+            print('wc = '+wc+' sins = ')
+            print(sins)
+            input()
+
+        oc = optChange(wc, mc)
+
+        report.append(wc+','+mc+','+str.format('{0:.3f}',oc)) 
+        number -= 1
+
+    reportWriter('generatedSynMutations.csv', 'WC,MC,OC', report) 
 
 if __name__ == "__main__":
     main()
