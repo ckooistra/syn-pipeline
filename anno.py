@@ -22,7 +22,8 @@ opt = {"AAA": 0.6077, "AAC": 0.9867, "AAG": 0.7746, "AAT": 0.4521, "ACA": 0.1658
                         "TGT": 0.4036, "TTA": 0.3039, "TTC": 0.4696, "TTG": 0.3182, "TTT": 0.2062}
 
 
-
+''' Insert exon start and stop coordinates into 
+dctionary dic '''
 for index, row in exons.iterrows():
     parentTranscript = row['attributes'].split(';')[0].split(':')[1]
 
@@ -34,7 +35,7 @@ for index, row in exons.iterrows():
         dic[parentTranscript] += (row['start'], row['end'])
     # print(parentTranscript)
 
-
+#Return true if called mutation is within 100 nucleotides of called mutation
 def checkSpliceProximity(ens_name,position):
     if dic.get(ens_name):
         for positions in dic[ens_name]:
@@ -48,12 +49,18 @@ def checkSpliceProximity(ens_name,position):
         notfound.append(ens_name)
 
 
-
+# Calculate change in optimality as per the dictionary opt
 def optChange(wCod,mCod):
     diff = opt[mCod] - opt[wCod] 
     print('Diff '+str(diff))
     return diff
 
+
+
+
+ 
+
+#Information is loaded from the anno.py and is used for the annotation of exon proximity
 with open ('output.csv', 'w') as ph:
 
     with open ('report.csv', 'r') as f:
@@ -83,7 +90,7 @@ with open ('output.csv', 'w') as ph:
             except KeyError:
                 print("line number +"+str(index)+"\n"+line+'\n'+fields[11])
                 #input("KeyError")
-
+# Print information not found into the things th
 with open ('notfoundinannotation.txt', 'w') as f:
     for line in notfound:
         print (line, file=f)

@@ -101,6 +101,7 @@ def getMutationInfo(sequences):
                 genome = int(values[23].split(":")[0])
                 genomePosition = int(values[23].split("-")[1])
                 aa = values[18][-1]
+                tip = values[7]
 
             except ValueError:
                 skipped.append(ensemblCode+",missing genome position")
@@ -119,7 +120,7 @@ def getMutationInfo(sequences):
                 ","+str(len(sequences[code]))+","+str(position)+","+str(3-((position)%3))+
                 ","+ normalNuc +"," + mutantNuc + "," + codons[0]+ ","+codons[1]+","+
                 transitionOrTransversion(normalNuc,mutantNuc)+","+
-                str(round(positionOfMutation(position, length),3))+","+aa+"\n")
+                str(round(positionOfMutation(position, length),3))+","+aa+','+tip+"\n")
 
 
                 matchNumber += 1
@@ -131,7 +132,7 @@ def getMutationInfo(sequences):
             else:
                 s = ensemblCode +' '+ str(length)+' '
                 keys = [key for key, value in sequences.items() if ensemblCode in
-                 key.upper()]
+                key.upper()]
                 for k in keys:
                  s += '---'+k+' '+str(len(sequences[k]))
 
@@ -149,7 +150,7 @@ def getMutationInfo(sequences):
 
 
     with open ('report.csv', 'w') as fil:
-        fil.write('gene,ENSEMBL,Genome,Genome Position,LengthTranscript,CDS Position,nucOfCodon,nuc,mNuc,nCodon,mCodontion,TransitionOrTransversion,position in AA chain %,AA\n')
+        fil.write('gene,ENSEMBL,Genome,Genome Position,LengthTranscript,CDS Position,nucOfCodon,nuc,mNuc,nCodon,mCodontion,TransitionOrTransversion,position in AA chain %,AA,cancerType\n')
         for line in report:
             fil.write(line)
 
