@@ -12,7 +12,7 @@ def main():
     seq = getSequencesFromReference()
     mutations = getMutations()
     tic = time.clock()
-    generateSynonymousMutations(1000000, seq, mutations)
+    generateRandomMutations(1000000, seq, mutations)
     toc = time.clock()
     print('time to complete 1000000 = '+str((toc-tic)/60))
 
@@ -205,10 +205,7 @@ def generateRandomMutations(number, sequences, transcripts):
 
     print('number of iterations '+str(noomber))
     
-    with open('generatedMutations.csv', 'w') as f:
-        print('WC,MC,TransitionOrTransversion,OC', file = f)
-        for line in report:
-            print(line, file = f)
+    reportWriter('generateRandomMutations.csv','WC,MC,TransitionOrTransversion,OC',report)
 
 
 ''' Same as above function however all mutations are synonymous calculated based on probability
