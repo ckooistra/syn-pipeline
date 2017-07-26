@@ -7,6 +7,9 @@ from checkMutations2 import makeCodon, makeMutatntCodon, getSequencesFromReferen
 from anno import opt, optChange
 import time
 
+
+#Generate 1,000,000 synonymous mutations about 6 minute run-time
+
 def main():
     
     seq = getSequencesFromReference()
