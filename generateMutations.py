@@ -7,6 +7,10 @@ from checkMutations2 import makeCodon, makeMutatntCodon, getSequencesFromReferen
 from anno import opt, optChange
 import time
 
+
+# Generate random mutations and keep the ones that are synonymous about 25 minute run-time
+# for 1,000,000 mutations
+
 def main():
     
     seq = getSequencesFromReference()
@@ -99,6 +103,7 @@ def createMutationProbMatrix(transi, transv):
 
     a  = np.array(lists)
 
+    print ("tits")
     return (a)
 
 
