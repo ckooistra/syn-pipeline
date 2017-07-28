@@ -102,6 +102,7 @@ def getMutationInfo(sequences):
                 genomePosition = int(values[23].split("-")[1])
                 aa = values[18][-1]
                 tip = values[7]
+                primary_histol = values[11]
 
             except ValueError:
                 skipped.append(ensemblCode+",missing genome position")
@@ -120,7 +121,7 @@ def getMutationInfo(sequences):
                 ","+str(len(sequences[code]))+","+str(position)+","+str(3-((position)%3))+
                 ","+ normalNuc +"," + mutantNuc + "," + codons[0]+ ","+codons[1]+","+
                 transitionOrTransversion(normalNuc,mutantNuc)+","+
-                str(round(positionOfMutation(position, length),3))+","+aa+','+tip+"\n")
+                str(round(positionOfMutation(position, length),3))+","+aa+','+tip+','+primary_histol+"\n")
 
 
                 matchNumber += 1
@@ -130,13 +131,14 @@ def getMutationInfo(sequences):
                     print("Code is "+code+" modulo 3 "+str(len(sequences.get(code))%3))
 
             else:
-                s = ensemblCode +' '+ str(length)+' '
-                keys = [key for key, value in sequences.items() if ensemblCode in
-                key.upper()]
-                for k in keys:
-                 s += '---'+k+' '+str(len(sequences[k]))
+                pass
+                #s = ensemblCode +' '+ str(length)+' '
+                #keys = [key for key, value in sequences.items() if ensemblCode in
+                #key.upper()]
+                #for k in keys:
+                 #s += '---'+k+' '+str(len(sequences[k]))
 
-                skipped.append(s)
+                #skipped.append(s)
 
             if number % 200 == 0:
                 print(number)
@@ -150,7 +152,7 @@ def getMutationInfo(sequences):
 
 
     with open ('report.csv', 'w') as fil:
-        fil.write('gene,ENSEMBL,Genome,Genome Position,LengthTranscript,CDS Position,nucOfCodon,nuc,mNuc,nCodon,mCodontion,TransitionOrTransversion,position in AA chain %,AA,cancerType\n')
+        fil.write('gene,ENSEMBL,Genome,Genome Position,LengthTranscript,CDS Position,nucOfCodon,nuc,mNuc,nCodon,mCodontion,TransitionOrTransversion,position in AA chain %,AA,cancerType,histol\n')
         for line in report:
             fil.write(line)
 

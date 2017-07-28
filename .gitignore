@@ -5,6 +5,7 @@
 !.gitignore
 !*.py
 !*.sh
+!*.r
 # etc...
 
 # ...even if they are in subdirectories
