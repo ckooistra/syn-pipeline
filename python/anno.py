@@ -8,7 +8,7 @@ import time
 dic = {}
 notfound = []
 
-anno = pd.read_csv('../Reference_Genome/Homo_sapiens.GRCh38.88.gff3', sep='\t', skiprows=200,
+anno = pd.read_csv('/home/chris/hd1/Reference_Genome/Homo_sapiens.GRCh38.88.gff3', sep='\t', skiprows=200,
                     names=["seqid","source","type","start","end","score","strand","phase","attributes"])
 exons = anno.loc[(anno['type'] == 'exon'),['start','end', 'attributes']]
 
@@ -63,7 +63,7 @@ def optChange(wCod,mCod):
 #Information is loaded from the anno.py and is used for the annotation of exon proximity
 with open ('output.csv', 'w') as ph:
 
-    with open ('report.csv', 'r') as f:
+    with open ('/home/chris/hd1/COSMIC_V80/report.csv', 'r') as f:
 
         print (f.readline().strip()+",closeToExon,optimality change", file=ph)
         within30 = ''
