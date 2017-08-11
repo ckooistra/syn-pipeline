@@ -15,9 +15,10 @@ def main():
     seq = getSequencesFromReference()
     mutations = getMutations()
     tic = time.clock()
-    generateSynonymousMutations(1000000, seq, mutations)
+    report = generateSynonymousMutations(1000000, seq, mutations)
     toc = time.clock()
     print('time to complete 1000000 = '+str((toc-tic)/60))
+    #reportWriter('generatedSynMutationsWithProb.csv', 'WC,MC,OC', report) 
 
 
 synAA = {'GCT':'A','GCC':'A','GCA':'A','GCG':'A',
@@ -115,7 +116,7 @@ def getMutations():
     tran = set() 
 
 
-    with open('report.csv', 'r') as f:
+    with open('/home/chris/hd1/COSMIC_V80/report.csv', 'r') as f:
         f.readline()
 
         for line in f:
@@ -207,11 +208,11 @@ def generateRandomMutations(number, sequences, transcripts):
         noomber += 1    
 
     print('number of iterations '+str(noomber))
-    
-    with open('generatedMutations.csv', 'w') as f:
-        print('WC,MC,TransitionOrTransversion,OC', file = f)
-        for line in report:
-            print(line, file = f)
+    return report
+#    with open('generatedMutations.csv', 'w') as f:
+#        print('WC,MC,TransitionOrTransversion,OC', file = f)
+#        for line in report:
+#            print(line, file = f)
 
 
 ''' Same as above function however all mutations are synonymous calculated based on probability
@@ -256,7 +257,8 @@ def generateSynonymousMutations(number, sequences, transcripts):
         report.append(wc+','+mc+','+str.format('{0:.3f}',oc)) 
         number -= 1
 
-    reportWriter('generatedSynMutationsWithProb.csv', 'WC,MC,OC', report) 
+    return report
 
 if __name__ == "__main__":
     main()
+

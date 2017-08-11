@@ -2,13 +2,30 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import generateMutations as gm
+import scipy.stats.stats as sp
+import multiprocessing as mp
+import time
 from info import *
 
-
 def main():
-    pass    
+    cancerMutationCounts = getMutationsCountsFromFile('/home/chris/Dropbox/BIN_3005/output.csv',9,10)
 
+    probMutationCounts = getMutationsCountsFromFile('/home/chris/hd1/COSMIC_V80/generatedMutations/generatedSynMutationsWithProb.csv',0,1)
 
+    ranMutationCounts = getMutationsCountsFromFile('/home/chris/hd1/COSMIC_V80/generatedMutations/generatedMutations.csv',0,1)
+    
+    compareAgainstCancerProb = compareMutationCounts(cancerMutationCounts,probMutationCounts) 
+    makeScatterPlot(compareAgainstCancerProb,'/home/chris/Dropbox/BIN_3005/R_graphs/figures/probSynCancer.png')
+    
+    compareAgainstCancerRan = compareMutationCounts(cancerMutationCounts,ranMutationCounts)
+    
+    makeScatterPlot(compareAgainstCancerRan,'/home/chris/Dropbox/BIN_3005/R_graphs/figures/ranSynCancer.png')
+    
+    makeScatterForRscore(createChartData(), '/home/chris/Dropbox/BIN_3005/R_graphs/figures/rScoreCampairaisons.png')
+    #makeScatterPlot(compareAgainstCancerSyn)    
+    
+    
 def createSynDic():
     l = {}
     for codon in syn:
@@ -17,10 +34,8 @@ def createSynDic():
     return l
 
 
-def getMutationCounts(mutations):
-    l = createSynDic()
 
-def getMutations(filepathandFile,wi,mi):
+def getMutationsCountsFromFile(filepathandFile,wi,mi):
     l = createSynDic()
     count = 0
     with open(filepathandFile, 'r') as f:
@@ -36,37 +51,120 @@ def getMutations(filepathandFile,wi,mi):
         print(str(count))
         return l    
 
-def compareMutations(cfilepathandFile,cwi,cmi,rfilepathandFile,rwi,rmi):
+
+def getMutationCountsFromMemory(mutations):
+    l = createSynDic()
+    for line in mutations: 
+        vals = line.split(',')
+        k = vals[0]+':'+vals[1]
+        l[k] += 1
+    return l
+
+
+def compareMutationCounts(counts1,counts2):
     
-    cancerMutationCounts = getMutations(cfilepathandFile,cwi,cmi)
-    randomMutationCounts = getMutations(rfilepathandFile,rwi,rmi)
+      
+    sum1 = sum(counts1.values())
+    sum2 = sum(counts2.values())
     
-    cancer_sum = sum(cancerMutationCounts.values())
-    generated_sum = sum(randomMutationCounts.values())
-    
-    bigger = max(cancer_sum, generated_sum)
-    smaller = min(cancer_sum, generated_sum)
+    bigger = max(sum1, sum2)
+    smaller = min(sum1, sum2)
 
     factor = smaller/bigger
 
     adjust = None
-    if bigger == cancer_sum:
-        adjust = cancerMutationCounts
+    if bigger == sum1:
+        adjust = counts1
     else:
-        adjust = randomMutationCounts
+        adjust = counts2
         
-    for mutations in adjust:
-        adjust[mutations] = int(adjust[mutations]*factor)
+    if adjust is not None:
+        for mutations in adjust:
+            adjust[mutations] = int(adjust[mutations]*factor)
     
     a = [[],[],[]] 
-    for k in cancerMutationCounts:
+    for k in counts1:
         a[0].append(k)
-        a[1].append(cancerMutationCounts[k])
-        a[2].append(randomMutationCounts[k])
+        a[1].append(counts1[k])
+        a[2].append(counts2[k])
 
     
     return a
 
+
+def run2Syn(number):
+    
+    seq1 = gm.getSequencesFromReference()
+    mutations1 = gm.getMutations()
+    report1 = gm.generateSynonymousMutations(number, seq1, mutations1)
+    counts1 = getMutationCountsFromMemory(report1)
+    
+    seq2 = gm.getSequencesFromReference()
+    mutations2 = gm.getMutations()
+    report2 = gm.generateSynonymousMutations(number, seq2, mutations2)
+    counts2 = getMutationCountsFromMemory(report2)
+
+    two_counts = compareMutationCounts(counts1,counts2)
+
+    are = sp.pearsonr(two_counts[1],two_counts[2])
+
+    print("For "+str(number)+" mutations R value is "+str(are[0])+" p-value "+str(are[1]))
+    return (number, are[0])
+
+def run2Ran(number):
+    
+    seq1 = gm.getSequencesFromReference()
+    mutations1 = gm.getMutations()
+    report1 = gm.generateRandomMutations(number, seq1, mutations1)
+    counts1 = getMutationCountsFromMemory(report1)
+    
+    seq2 = gm.getSequencesFromReference()
+    mutations2 = gm.getMutations()
+    report2 = gm.generateRandomMutations(number, seq2, mutations2)
+    counts2 = getMutationCountsFromMemory(report2)
+
+    two_counts = compareMutationCounts(counts1,counts2)
+
+    are = sp.pearsonr(two_counts[1],two_counts[2])
+
+    print("For "+str(number)+" mutations R value is "+str(are[0])+" p-value "+str(are[1]))
+    return (number, are[0])
+
+def runInPara(*fns):
+    proc = []
+    for fn in fns:
+        p = mp.Process(target=fn)
+        p.start()
+        proc.append(p)
+        
+        for p in proc:
+            p.join()
+
+def createChartData():
+    print("tits")
+    pool = mp.Pool(processes=8)
+    amounts = [1000,10000,100000,1000000]
+    
+    results = []
+    results1 = []
+    tic = time.clock() 
+    for nums in amounts:
+        results.append(pool.apply_async(run2Syn,args=(nums,)))
+        results1.append(pool.apply_async(run2Ran,args=(nums,)))
+    
+    output = [p.get() for p in results]
+    output1 = [p.get() for p in results1]
+    value = [[[],[]],[[],[]]]
+    for thing in output:
+        value[0][0].append(thing[0])
+        value[0][1].append(thing[1])
+    
+    for thing in output1:
+        value[1][0].append(thing[0])
+        value[1][1].append(thing[1])
+    toc = time.clock()
+    print('total time to complete multi-process jobs '+str(toc -tic))
+    return value 
 
 def makeScatterPlot(values, filepath):
     
@@ -74,8 +172,34 @@ def makeScatterPlot(values, filepath):
     y = np.fromiter(values[1],dtype=float)
 
     plt.scatter(x,y)
-    plt.show()
+    plt.savefig(filepath)
+    plt.clf()
 
+
+def makeScatterForRscore(data, filepath):
+
+    xboth = np.fromiter(data[0],dtype=float)
+    ysyn = np.fromiter(data[1],dtype=float)
+    yran = np.fromiter(data[2],dtype=float)
+    
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+
+    ax1.scatter(xboth, ysyn, s=10, c='b', marker="s", label='probability model')
+    ax1.scatter(xboth,yran, s=10, c='r', marker="o", label='random')
+    
+    ax1.plot(xboth, ysyn)
+    ax1.plot(xboth,yran)
+    plt.title('Mutations generated with random and transition/transversion\n probability model at 1000,10000, 100000, 1000000 intervals')
+    plt.xlabel('Number of mutations generated')
+    plt.ylabel('Rscore')
+    plt.ylim(0.8,1.0125)
+    plt.legend(loc='lower right');
+    plt.savefig(filepath)
+
+def writeComparisonGraphToFile(info):
+
+    reportWriter('mutation_generation_comparison_graph_data.csv','1000,10000,100000,1000000')
 
 
 if __name__ == "__main__":

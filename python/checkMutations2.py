@@ -47,7 +47,7 @@ def positionOfMutation(pos, seqLength):
 def getSequencesFromReference():
     sequences = {}
     
-    with open('tmp', 'r') as f:
+    with open('/home/chris/hd1/Reference_Genome/genomes/tmp', 'r') as f:
         f.readline()
 
         for line in f:
