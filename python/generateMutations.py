@@ -4,7 +4,7 @@ import random
 import numpy as np
 from collections import Counter
 from checkMutations2 import makeCodon, makeMutatntCodon, getSequencesFromReference, transitionOrTransversion, reportWriter 
-from anno import opt, optChange
+from info import *
 import time
 
 
@@ -19,29 +19,6 @@ def main():
     toc = time.clock()
     print('time to complete 1000000 = '+str((toc-tic)/60))
     #reportWriter('generatedSynMutationsWithProb.csv', 'WC,MC,OC', report) 
-
-
-synAA = {'GCT':'A','GCC':'A','GCA':'A','GCG':'A',
-       'CGA':'R','CGT':'R','CGC':'R','CGG':'R','AGA':'R','AGG':'R',
-       'AAT':'N','AAC':'N','GAT':'D','GAC':'D','TGT':'C','TGC':'C','CAA':'Q','CAG':'Q','GAA':'E','GAG':'E',
-       'GGA':'G','GGT':'G','GGC':'G','GGG':'G','CAT':'H','CAC':'H','ATT':'I','ATC':'I','ATA':'I',
-       'ATG':'-','TTA':'L','TTG':'L','CTA':'L','CTT':'L','CTC':'L','CTG':'L','AAA':'K','AAG':'K','TTT':'F','TTC':'F',
-       'CCA':'P','CCT':'P','CCC':'P','CCG':'P','AGT':'S','AGC':'S','TCA':'S','TCT':'S','TCC':'S','TCG':'S',
-       'ACA':'T','ACT':'T','ACC':'T','ACG':'T','TGG':'W','TAT':'Y','TAC':'Y',
-       'GTA':'V','GTT':'V','GTC':'V','GTG':'V', 'TAA':'ST', 'TGA':'ST', 'TAG':'ST'
-      }
-
-synGroup = { 'A':['GCT', 'GCC', 'GCA', 'GCG'], 'R':['CGA','CGT','CGC','CGG','AGA','AGG'],
-            'N':['AAT','AAC'], 'D':['GAT','GAC'], 'C':['TGT','TGC'], 'Q':['CAA','CAG'], 'E':['GAA','GAG'],
-            'G':['GGA','GGT','GGC','GGG'], 'H':['CAT','CAC'], 'I':['ATT','ATC','ATA'], 'M':['ATG'],
-            'L':['TTA','TTG','CTA','CTT','CTC','CTG'], 'K':['AAA','AAG'], 'F':['TTT','TTC'],
-            'P':['CCA','CCT','CCC','CCG'], 'S':['AGT','AGC','TCA','TCT','TCC','TCG'],
-            'T':['ACA','ACT','ACC','ACG'], 'W':['TGG'], 'Y':['TAT','TAC'], 'V':['GTA','GTT','GTC','GTG'],
-            'ST':['TAA','TAG','TGA'] 
-           }
-
-
-codons = ['AAA', 'AAC', 'AAG', 'AAT', 'ACA', 'ACC', 'ACG', 'ACT', 'AGA', 'AGC', 'AGG', 'AGT', 'ATA', 'ATC', 'ATG', 'ATT', 'CAA', 'CAC', 'CAG', 'CAT', 'CCA', 'CCC', 'CCG', 'CCT', 'CGA', 'CGC', 'CGG', 'CGT', 'CTA', 'CTC', 'CTG', 'CTT', 'GAA', 'GAC', 'GAG', 'GAT', 'GCA', 'GCC', 'GCG', 'GCT', 'GGA', 'GGC', 'GGG', 'GGT', 'GTA', 'GTC', 'GTG', 'GTT', 'TAA', 'TAC', 'TAG', 'TAT', 'TCA', 'TCC', 'TCG', 'TCT', 'TGA', 'TGC', 'TGG', 'TGT', 'TTA', 'TTC', 'TTG', 'TTT']
 
 
 def createCodonLists():
@@ -131,6 +108,66 @@ def getMutations():
             tran.add(transcript)
     
     return [tran, cntTran, cntGene]    
+
+#Get set of transcripts from a list of genes provided in parameter
+def getMutationsFromList(geneList):
+
+    tran = set()
+    geneList = set(geneList)
+    print('before open file')
+    #number = 0
+    with open('/home/chris/hd1/COSMIC_V80/report.csv', 'r') as f:
+        f.readline()
+        print('just after readline')
+        for line in f:
+            #number += 1
+            #if number % 2000 == 0:
+            #    print('line '+str(number))
+            words = line.split(',')
+            gene = words[0]
+            
+            if gene in geneList:
+                transcript = words[1]+'_'+words[4]
+                tran.add(transcript)
+    
+    return [tran]    
+
+def getGeneDic():
+    geneDic = {}
+
+    with open('/home/chris/hd1/COSMIC_V80/report.csv', 'r') as f:
+        f.readline()
+        for line in f:
+            words = line.split(',')
+            gene = words[0]
+            transcript = words[1]+'_'+words[4]
+            
+            if geneDic.get(gene) is None:
+                geneDic[gene] = set()
+            geneDic[gene].add(transcript)
+        
+        return geneDic    
+
+def getMutationsFromList2(geneList, masterList):
+
+    tran = set() 
+    print('before open file')
+    number = 0
+    with open('/home/chris/hd1/COSMIC_V80/report.csv', 'r') as f:
+        f.readline()
+        print('just after readline')
+        for line in f:
+            number += 1
+            if number % 2000 == 0:
+                print('line '+str(number))
+            words = line.split(',')
+            gene = words[0]
+            
+            if gene in geneList:
+                transcript = words[1]+'_'+words[4]
+                tran.add(transcript)
+    
+    return tran    
 
 #Returns a list with two vectors, one of potential codons
 #the other with probabilities for the first vector

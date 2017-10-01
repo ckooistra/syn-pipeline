@@ -1,4 +1,3 @@
-
 #/bin/python
 
 from collections import Counter
@@ -152,7 +151,7 @@ def getMutationInfo(sequences):
 
 
     with open ('report.csv', 'w') as fil:
-        fil.write('gene,ENSEMBL,Genome,Genome Position,LengthTranscript,CDS Position,nucOfCodon,nuc,mNuc,nCodon,mCodontion,TransitionOrTransversion,position in AA chain %,AA,cancerType,histol\n')
+        fil.write('gene,ENSEMBL,Genome,Genome Position,LengthTranscript,CDS Position,nucOfCodon,nuc,mNuc,nCodon,mCodontion,TransitionOrTransversion,position_AA,AA,cancerType,histol\n')
         for line in report:
             fil.write(line)
 

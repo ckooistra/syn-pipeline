@@ -9,11 +9,11 @@ import time
 from info import *
 
 def main():
-    cancerMutationCounts = getMutationsCountsFromFile('/home/chris/Dropbox/BIN_3005/output.csv',9,10)
+    cancerMutationCounts = getMutationCountsFromFile('/home/chris/Dropbox/BIN_3005/output.csv',9,10)
 
-    probMutationCounts = getMutationsCountsFromFile('/home/chris/hd1/COSMIC_V80/generatedMutations/generatedSynMutationsWithProb.csv',0,1)
+    probMutationCounts = getMutationCountsFromFile('/home/chris/hd1/COSMIC_V80/generatedMutations/generatedSynMutationsWithProb.csv',0,1)
 
-    ranMutationCounts = getMutationsCountsFromFile('/home/chris/hd1/COSMIC_V80/generatedMutations/generatedMutations.csv',0,1)
+    ranMutationCounts = getMutationCountsFromFile('/home/chris/hd1/COSMIC_V80/generatedMutations/generatedMutations.csv',0,1)
     
     compareAgainstCancerProb = compareMutationCounts(cancerMutationCounts,probMutationCounts) 
     makeScatterPlot(compareAgainstCancerProb,'/home/chris/Dropbox/BIN_3005/R_graphs/figures/probSynCancer.png')
@@ -35,7 +35,7 @@ def createSynDic():
 
 
 
-def getMutationsCountsFromFile(filepathandFile,wi,mi):
+def getMutationCountsFromFile(filepathandFile,wi,mi):
     l = createSynDic()
     count = 0
     with open(filepathandFile, 'r') as f:
@@ -62,7 +62,7 @@ def getMutationCountsFromMemory(mutations):
 
 
 def compareMutationCounts(counts1,counts2):
-    
+
       
     sum1 = sum(counts1.values())
     sum2 = sum(counts2.values())
@@ -130,18 +130,8 @@ def run2Ran(number):
     print("For "+str(number)+" mutations R value is "+str(are[0])+" p-value "+str(are[1]))
     return (number, are[0])
 
-def runInPara(*fns):
-    proc = []
-    for fn in fns:
-        p = mp.Process(target=fn)
-        p.start()
-        proc.append(p)
-        
-        for p in proc:
-            p.join()
 
 def createChartData():
-    print("tits")
     pool = mp.Pool(processes=8)
     amounts = [1000,10000,100000,1000000]
     
@@ -163,7 +153,6 @@ def createChartData():
         value[1][0].append(thing[0])
         value[1][1].append(thing[1])
     toc = time.clock()
-    print('total time to complete multi-process jobs '+str(toc -tic))
     return value 
 
 def makeScatterPlot(values, filepath):
@@ -176,23 +165,49 @@ def makeScatterPlot(values, filepath):
     plt.clf()
 
 
+def makeScatterPlot2(values0, values1, filepath):
+
+    x1 = np.fromiter(values0[2],dtype=float)
+    y1 = np.fromiter(values0[1],dtype=float)
+
+    #a = plt.scatter(x,y)
+
+    x2 = np.fromiter(values1[2],dtype=float)
+    y2 = np.fromiter(values1[1],dtype=float)
+    #b = plt.scatter(x,y)
+    
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+
+    ax1.scatter(x1, y1, s=10, c='b', marker="s", label='ts/tv model')
+    ax1.scatter(x2,y2, s=10, c='r', marker="o", label='simple model')
+    plt.plot( [0,30000],[0,30000] )
+    plt.legend(loc='upper right')
+    plt.savefig(filepath)
+    plt.clf()
+
 def makeScatterForRscore(data, filepath):
 
     xboth = np.fromiter(data[0],dtype=float)
     ysyn = np.fromiter(data[1],dtype=float)
     yran = np.fromiter(data[2],dtype=float)
-    
+    ti = "Sampling of Background Mutations"
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
+    plt.xscale('log')
 
-    ax1.scatter(xboth, ysyn, s=10, c='b', marker="s", label='probability model')
-    ax1.scatter(xboth,yran, s=10, c='r', marker="o", label='random')
-    
+    ax1.scatter(xboth, ysyn, s=10, c='b', marker="s", label='ts/tv model')
+    ax1.scatter(xboth,yran, s=10, c='r', marker="o", label='simple model')
+    xvals = np.array([1000,10000,100000,1000000])
+    my_xticks = ['1000','10,000','100,000','1,000,000']
+    yvals = np.array([0.8,0.85,0.9,0.95,1])
+    plt.xticks(xvals, my_xticks)
+    plt.yticks(np.arange(0.8,1.0125,0.05))
     ax1.plot(xboth, ysyn)
     ax1.plot(xboth,yran)
-    plt.title('Mutations generated with random and transition/transversion\n probability model at 1000,10000, 100000, 1000000 intervals')
+    plt.title(ti)
     plt.xlabel('Number of mutations generated')
-    plt.ylabel('Rscore')
+    plt.ylabel('Correlation Coefficient')
     plt.ylim(0.8,1.0125)
     plt.legend(loc='lower right');
     plt.savefig(filepath)
@@ -204,4 +219,3 @@ def writeComparisonGraphToFile(info):
 
 if __name__ == "__main__":
     main()
-        
