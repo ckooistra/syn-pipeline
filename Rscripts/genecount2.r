@@ -1,6 +1,11 @@
+#!/usr/bin/env R
 
-data <- read.table("/home/chris/Dropbox/BIN_3005/code/supplemental/geneCount.txt")
-postscript("/home/chris/Dropbox/BIN_3005/R_graphs/geneMutationCount.ps", width=5, height=4, paper="special", onefile=F)
+#Gives histogram of distribution of relative position of mutations on transcript
+
+base = dirname(dirname(getwd()))
+
+data <- read.table(paste0(base,"/code/supplemental/geneCount.txt"))
+postscript(paste0(base,"/R_graphs/geneMutationCount.ps"), width=5, height=4, paper="special", onefile=F)
 
 par(mar=c(6,6,4,1))
 hist(data[,2], breaks = 500, xlim = c(0, 150),  axes=F, xlab="", ylab="" , main="", col="#29ABE2", border="white")

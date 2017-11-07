@@ -8,6 +8,6 @@ pie_vector_lables <- c("Not Close", "Close to Exon")
 print(pie_data)
 print(pie_vector)
 
-png(filename="/home/chris/Dropbox/BIN_3005/R_graphs/figures/exon_pie.png")
+postscript("/home/chris/Dropbox/BIN_3005/R_graphs/figures/exon_pie.ps")
 pie(pie_vector, labels=pie_vector_lables, main="Mutations close to exon junctures")
 dev.off()

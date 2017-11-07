@@ -1,14 +1,14 @@
 #/bin/python
 
 from collections import Counter
-import re
+import re,os
 
 def main():
     
     s = getSequencesFromReference()
     getMutationInfo(s)
 
-
+#Return codon from position given as parameter of CDS
 def makeCodon(seq, p):
     if p% 3 == 0:
         return seq[p-3:p]
@@ -17,6 +17,7 @@ def makeCodon(seq, p):
     if p% 3 == 2:
         return seq[p-2:p+1]
 
+#Make mutant codon based on mutation position 
 def makeMutatntCodon(codon, pos, mutation):
 
     pos = pos % 3
@@ -29,6 +30,7 @@ def makeMutatntCodon(codon, pos, mutation):
     if pos is 2:
         return codon[0]+mutation+codon[1]
 
+#Given two codons returns transition or transversion
 def transitionOrTransversion(normalNuc, mutantNuc):
     purines = ["A", "G"]
     pyrimidines = ["T", "C"]
@@ -38,6 +40,7 @@ def transitionOrTransversion(normalNuc, mutantNuc):
     else:
         return "transversion"
 
+#Reutrns relative position of mutation position on the CDS
 def positionOfMutation(pos, seqLength):
    return pos/seqLength
 
@@ -46,7 +49,7 @@ def positionOfMutation(pos, seqLength):
 def getSequencesFromReference():
     sequences = {}
     
-    with open('/home/chris/hd1/Reference_Genome/genomes/tmp', 'r') as f:
+    with open(base_path+'/referenceGenomeCDS.txt', 'r') as f:
         f.readline()
 
         for line in f:
@@ -65,8 +68,12 @@ def reportWriter(name, title, info):
         for line in info:
             print(line, file=f)
 
+
+#Filters mutations by checking that they can be mapped.  If for some it can't it will print out the mutation
+#to one of the error files,  this return report.csv which then contains the filtered results
 def getMutationInfo(sequences):
     
+    #This is where you put your copy of the COSMIC v80 database that has been filtered for mutations.    
     with open('CosmicMutantExportSilent.tsv', 'r') as f:
 
         number = 0
@@ -129,15 +136,16 @@ def getMutationInfo(sequences):
                 if aa == '*' and len(sequences.get(code))%3 is not 0:
                     print("Code is "+code+" modulo 3 "+str(len(sequences.get(code))%3))
 
+            #If the code is not found then we put it into the skipped report
             else:
                 pass
-                #s = ensemblCode +' '+ str(length)+' '
+                s = ensemblCode +' '+ str(length)+' '
                 #keys = [key for key, value in sequences.items() if ensemblCode in
                 #key.upper()]
                 #for k in keys:
                  #s += '---'+k+' '+str(len(sequences[k]))
 
-                #skipped.append(s)
+                skipped.append(s)
 
             if number % 200 == 0:
                 print(number)
@@ -166,6 +174,8 @@ def getMutationInfo(sequences):
     with open ("notMod.txt", 'w') as fil:
             for line in mod:
                         fil.write(line+'\n')
+
+base_path = os.path.dirname(os.path.abspath(__file__)).rsplit("/",2)[0]
 
 if __name__ == "__main__":
     main()

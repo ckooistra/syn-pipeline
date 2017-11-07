@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import generateMutations as gm
@@ -9,20 +10,20 @@ import time
 from info import *
 
 def main():
-    cancerMutationCounts = getMutationCountsFromFile('/home/chris/Dropbox/BIN_3005/output.csv',9,10)
+    cancerMutationCounts = getMutationCountsFromFile(base_path+'/output.csv',9,10)
 
-    probMutationCounts = getMutationCountsFromFile('/home/chris/hd1/COSMIC_V80/generatedMutations/generatedSynMutationsWithProb.csv',0,1)
+    probMutationCounts = getMutationCountsFromFile(base_path+'/generatedMutations/generatedSynMutationsWithProb.csv',0,1)
 
-    ranMutationCounts = getMutationCountsFromFile('/home/chris/hd1/COSMIC_V80/generatedMutations/generatedMutations.csv',0,1)
+    ranMutationCounts = getMutationCountsFromFile(base_path+'/generatedMutations/generatedMutations.csv',0,1)
     
     compareAgainstCancerProb = compareMutationCounts(cancerMutationCounts,probMutationCounts) 
     makeScatterPlot(compareAgainstCancerProb,'/home/chris/Dropbox/BIN_3005/R_graphs/figures/probSynCancer.png')
     
     compareAgainstCancerRan = compareMutationCounts(cancerMutationCounts,ranMutationCounts)
     
-    makeScatterPlot(compareAgainstCancerRan,'/home/chris/Dropbox/BIN_3005/R_graphs/figures/ranSynCancer.png')
+    makeScatterPlot(compareAgainstCancerRan, base_path+'/R_graphs/figures/ranSynCancer.png')
     
-    makeScatterForRscore(createChartData(), '/home/chris/Dropbox/BIN_3005/R_graphs/figures/rScoreCampairaisons.png')
+    makeScatterForRscore(createChartData(), base_path+'/R_graphs/figures/rScoreCampairaisons.png')
     #makeScatterPlot(compareAgainstCancerSyn)    
     
     
@@ -216,6 +217,7 @@ def writeComparisonGraphToFile(info):
 
     reportWriter('mutation_generation_comparison_graph_data.csv','1000,10000,100000,1000000')
 
+base_path = os.path.dirname(os.path.abspath(__file__)).rsplit("/",2)[0]
 
 if __name__ == "__main__":
     main()

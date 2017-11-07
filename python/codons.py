@@ -1,6 +1,6 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 
-
+import os
 from info import *
 from compareMutationTypes import getMutationCountsFromFile
 import argparse, sys
@@ -9,8 +9,7 @@ import numpy as np
 import scipy.stats as sp
 import generateMutations as gm
 
-
-
+#Must give integer value to exonLimit viariable on line 176
 def main():
 
     parser = argparse.ArgumentParser()
@@ -41,15 +40,16 @@ def main():
 def genCase(sub, ptf, target, onc):
     df = df_ref
     out = {}
-
+    
     # Subset by oncogenes if onco flag true
-    if onc is not None:
+    if onc is not False:
         df = df[df['gene'].isin(oncos)]
 
-    for codon in AAcodons:
 
+    for codon in AAcodons:
         if sub is not None:
             df = df[(df.cancerType == sub)]
+            
         out[codon] = treatCodon(codon, df, target)
         
     for item in out:
@@ -59,9 +59,12 @@ def genCase(sub, ptf, target, onc):
             print (item+' == None')
             
     if ptf is not None:
+
         if sub is None:
             sub = "full_data_set"
-        if onc is not None:
+            print (type(sub))
+            print()
+        if onc is not False:
             sub = "onco_" + sub
 
         filename = sub+'_'+target+'.csv'
@@ -75,6 +78,8 @@ def genCase(sub, ptf, target, onc):
     return out
 
 def treatCodon(codon,df,target):
+
+    print(codon)
     #Get Data frame which contains codons of interest
     dfc = df[(df[target] == codon)]
     
@@ -134,9 +139,9 @@ def getValues(mutations):
 
 def getdf():
 
-    df = pd.read_csv('/home/chris/Dropbox/BIN_3005/output.csv')
+    df = pd.read_csv(base_path+'/output_new_30nuc.csv')
     print(df.columns.values)
-    df = df[(df.closeToExon == 'no')]
+    df = df[(df.closeToExon <= exonLimit)]
     return df
 
 def getTranscripts(cList, subset):
@@ -148,7 +153,7 @@ def getTranscripts(cList, subset):
 
 def getOncos():
     l = []
-    with open("/home/chris/Dropbox/BIN_3005/code/supplemental/oncogenes.txt", 'r') as f:
+    with open(base_path+"/code/supplemental/oncogenes.txt", 'r') as f:
         for line in f:
             l.append(line.strip())
         
@@ -160,10 +165,15 @@ def getOncos():
 #Global variables
 seq = gm.getSequencesFromReference()
 geneDic = gm.getGeneDic()
+
+#Get Dropbox root path for refrencing other files
+base_path = os.path.dirname(os.path.abspath(__file__)).rsplit("/",2)[0]
+
 df_ref = getdf()
 stop = ['TGA', 'TAA', 'TAG']
 AAcodons = [aa for aa in codons if aa not in stop] 
 oncos = getOncos()
+exon_limit = None
 
 
 
